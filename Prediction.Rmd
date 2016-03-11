@@ -1,0 +1,70 @@
+---
+title: ' How well do people exercise? '
+output: html_document
+---
+##Name: Parnian Zargham
+
+## Executive Summary
+
+In this project the goal is to predict how well people exercise from data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways.
+
+## Preprocessing the data
+The first step is to load the data using the provided URL,and remove “#DIV/0!”, replace with an NA value.. 
+
+```{r}
+urltrain<-"https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+urltest<-"https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+trainData1<-read.csv(urltrain,na.strings=c("NA","#DIV/0!", ""))
+testData1<-read.csv(urltest,na.strings=c("NA","#DIV/0!", ""))
+```
+We nead to laod the required library for this study.
+```{r}
+library(caret)
+library(kernlab)
+library(randomForest)
+```
+Some of the data in this datasets are missing,so we need to remove them first.Moreover, the first 7 columns of the data are irrelavant data to our predicition,so we need to remove those,too.
+
+```{r}
+# Delete columns with all missing values
+trainData2<-trainData1[,colSums(is.na(trainData1)) == 0]
+testData2 <-testData1[,colSums(is.na(testData1)) == 0]
+
+# remove irrelavant comulum
+trainData  <-trainData2[,-(1:7)]
+testData <-testData2 [,-(1:7)]
+```
+
+## Cross-Validation
+In this study we divide the data to two groups: training data( 75% of dataset) to define the model and testing data(25% of dataset) to validate our model. 
+```{r}
+set.seed(13343)
+inTrain<- createDataPartition(trainData$classe,p=.75,list=FALSE)
+training<-trainData[inTrain,]
+testing<-trainData[-inTrain,]
+
+
+dim(training)
+dim(testing)
+```
+
+## Modeling
+In this part we chose random forest becuase of it's good preformance in classification problems.Which you can see here it has 100% accuracy here(confusionMatrix result). The expected out-of-sample error is calculated as 1 - accuracy,as you see form the confusionmatrix result is 0.
+
+```{r}
+#Model
+model <- randomForest(classe~.,data=training,method="class")
+
+pred<-predict(model,training)
+
+# if you get an error install.packages("e1071")
+
+confusionMatrix(pred,training$classe)
+```
+
+## Result
+Our prediction model was performed on the test data with 20 observation and here is the results:
+```{r}
+predtest <- predict(model,testData , type="class")
+predtest
+```
